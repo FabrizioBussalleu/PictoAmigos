@@ -27,9 +27,8 @@
   },
   "devDependencies": {
     "http-server": "^14.1.1",
-    "live-server": "^1.2.2"
+    "live-server": "^1.2.0"
   },
-  "dependencies": {},
   "engines": {
     "node": ">=14.0.0"
   },
