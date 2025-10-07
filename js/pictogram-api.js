@@ -744,35 +744,38 @@ class PictogramSelector {
     }
 
     sendPictogramMessage(pictogramUrls, text) {
-        const newMessage = {
-            type: 'sent',
-            content: text,
-            time: getCurrentTime(),
-            pictogramUrls: pictogramUrls // URLs de pictogramas reales
-        };
-        
-        if (!messages[currentFriend]) {
-            messages[currentFriend] = [];
+        if (typeof window.pictoAmigosApp !== 'undefined' && window.pictoAmigosApp.chatModule) {
+            const chatModule = window.pictoAmigosApp.chatModule;
+            const appState = window.pictoAmigosApp.appState;
+
+            const newMessage = {
+                type: 'sent',
+                content: text,
+                time: this.getCurrentTime(),
+                pictogramUrls: pictogramUrls
+            };
+
+            const currentFriend = appState ? appState.getCurrentFriend() : 'Ana';
+            if (appState) {
+                appState.addMessage(currentFriend, newMessage);
+            }
+
+            const chatMessages = document.getElementById('chatMessages');
+            if (chatMessages) {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            if (navigator.vibrate) {
+                navigator.vibrate([50, 30, 50]);
+            }
         }
-        messages[currentFriend].push(newMessage);
-        
-        const chatMessages = document.getElementById('chatMessages');
-        const messageElement = this.createPictogramMessageElement(newMessage);
-        chatMessages.appendChild(messageElement);
-        
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        
-        setTimeout(() => {
-            simulateAutoReply();
-        }, 1000 + Math.random() * 2000);
-        
-        if (navigator.vibrate) {
-            navigator.vibrate([50, 30, 50]);
-        }
-        
-        if (window.achievementSystem) {
-            window.achievementSystem.updateProgress('pictogramMaster', pictogramUrls.length);
-        }
+    }
+
+    getCurrentTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
     }
 
     createPictogramMessageElement(message) {
