@@ -1,3 +1,5 @@
+import { appState } from './state.js';
+import { showNotification, safeVibrate } from './dom.js';
 
 const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -8,7 +10,6 @@ if (prefersReducedMotion) {
     document.documentElement.style.setProperty('--transition-slow', '0s');
     document.documentElement.style.setProperty('--transition-bounce', '0s');
 }
-
 
 const themes = {
     default: {
@@ -56,19 +57,14 @@ const themes = {
 function applyTheme(themeName) {
     const theme = themes[themeName];
     if (!theme) return;
-    
+
     Object.entries(theme.colors).forEach(([property, value]) => {
         document.documentElement.style.setProperty(`--${property}-color`, value);
     });
-    
-    if (typeof window.showNotification === 'function') {
-        window.showNotification(`Tema "${theme.name}" aplicado`, 'success');
-    } else {
-        console.log(`Tema "${theme.name}" aplicado`);
-    }
+
+    showNotification(`Tema "${theme.name}" aplicado`, 'success');
     localStorage.setItem('pictoAmigosTheme', themeName);
 }
-
 
 class SoundManager {
     constructor() {
@@ -76,72 +72,66 @@ class SoundManager {
         this.enabled = true;
         this.init();
     }
-    
+
     init() {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            this.loadSounds();
         } catch (error) {
             console.log('Web Audio API no disponible en este navegador');
             this.audioContext = null;
         }
     }
-    
+
     createBeep(frequency, duration, type = 'sine') {
         if (!this.audioContext || !this.enabled) return;
-        
+
         const oscillator = this.audioContext.createOscillator();
         const gainNode = this.audioContext.createGain();
-        
+
         oscillator.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
-        
+
         oscillator.frequency.value = frequency;
         oscillator.type = type;
-        
+
         gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
-        
+
         oscillator.start(this.audioContext.currentTime);
         oscillator.stop(this.audioContext.currentTime + duration);
     }
-    
+
     playNotification() {
         this.createBeep(800, 0.1);
         setTimeout(() => this.createBeep(600, 0.1), 100);
     }
-    
+
     playSuccess() {
-        this.createBeep(523, 0.1); // C
-        setTimeout(() => this.createBeep(659, 0.1), 100); // E
-        setTimeout(() => this.createBeep(784, 0.2), 200); // G
+        this.createBeep(523, 0.1);
+        setTimeout(() => this.createBeep(659, 0.1), 100);
+        setTimeout(() => this.createBeep(784, 0.2), 200);
     }
-    
+
     playError() {
         this.createBeep(300, 0.2);
         setTimeout(() => this.createBeep(250, 0.3), 150);
     }
-    
+
     playMessage() {
         this.createBeep(440, 0.1, 'triangle');
     }
-    
+
     toggle() {
         this.enabled = !this.enabled;
-        if (typeof window.showNotification === 'function') {
-            window.showNotification(
-                this.enabled ? 'Sonidos activados 🔊' : 'Sonidos desactivados 🔇',
-                'info'
-            );
-        } else {
-            console.log(this.enabled ? 'Sonidos activados 🔊' : 'Sonidos desactivados 🔇');
-        }
+        showNotification(
+            this.enabled ? 'Sonidos activados 🔊' : 'Sonidos desactivados 🔇',
+            'info'
+        );
         return this.enabled;
     }
 }
 
 const soundManager = new SoundManager();
-
 
 class SettingsManager {
     constructor() {
@@ -155,7 +145,7 @@ class SettingsManager {
         };
         this.loadSettings();
     }
-    
+
     loadSettings() {
         const saved = localStorage.getItem('pictoAmigosSettings');
         if (saved) {
@@ -163,33 +153,33 @@ class SettingsManager {
         }
         this.applySettings();
     }
-    
+
     saveSettings() {
         localStorage.setItem('pictoAmigosSettings', JSON.stringify(this.settings));
     }
-    
+
     updateSetting(key, value) {
         this.settings[key] = value;
         this.saveSettings();
         this.applySettings();
     }
-    
+
     applySettings() {
         applyTheme(this.settings.theme);
-        
+
         soundManager.enabled = this.settings.soundEnabled;
-        
+
         document.documentElement.style.setProperty(
             '--font-size-base',
             this.getFontSizeValue(this.settings.fontSize)
         );
-        
+
         if (!this.settings.animationsEnabled) {
             document.documentElement.style.setProperty('--transition-fast', '0s');
             document.documentElement.style.setProperty('--transition-normal', '0s');
         }
     }
-    
+
     getFontSizeValue(size) {
         const sizes = {
             small: '0.9rem',
@@ -202,7 +192,6 @@ class SettingsManager {
 }
 
 const settingsManager = new SettingsManager();
-
 
 class AchievementSystem {
     constructor() {
@@ -242,10 +231,41 @@ class AchievementSystem {
                 target: 5
             }
         };
-        
+
+        this.messageCount = 0;
+        this.lastMessageTime = Date.now();
+        this.usedPictograms = new Set();
+        this.chattedFriends = new Set();
+
         this.loadAchievements();
+        this.setupEventListeners();
     }
-    
+
+    setupEventListeners() {
+        appState.subscribe('messageSent', () => {
+            this.messageCount++;
+            const currentTime = Date.now();
+
+            if (this.messageCount === 1) {
+                this.unlock('firstMessage');
+            }
+
+            if (currentTime - this.lastMessageTime < 60000) {
+                this.updateProgress('speedTyper');
+            }
+
+            this.lastMessageTime = currentTime;
+            soundManager.playMessage();
+        });
+
+        appState.subscribe('friendSelected', (friendName) => {
+            if (!this.chattedFriends.has(friendName)) {
+                this.chattedFriends.add(friendName);
+                this.updateProgress('socialButterfly');
+            }
+        });
+    }
+
     loadAchievements() {
         const saved = localStorage.getItem('pictoAmigosAchievements');
         if (saved) {
@@ -257,42 +277,37 @@ class AchievementSystem {
             });
         }
     }
-    
+
     saveAchievements() {
         localStorage.setItem('pictoAmigosAchievements', JSON.stringify(this.achievements));
     }
-    
+
     unlock(achievementId) {
         const achievement = this.achievements[achievementId];
         if (!achievement || achievement.unlocked) return;
-        
+
         achievement.unlocked = true;
         this.saveAchievements();
-        
+
         this.showAchievementNotification(achievement);
         soundManager.playSuccess();
-        
-        try {
-            if (navigator.vibrate && document.hasFocus()) {
-                navigator.vibrate([100, 50, 100, 50, 200]);
-            }
-        } catch (error) {
-        }
+
+        safeVibrate([100, 50, 100, 50, 200]);
     }
-    
+
     updateProgress(achievementId, increment = 1) {
         const achievement = this.achievements[achievementId];
         if (!achievement || achievement.unlocked) return;
-        
+
         achievement.progress = (achievement.progress || 0) + increment;
-        
+
         if (achievement.progress >= achievement.target) {
             this.unlock(achievementId);
         } else {
             this.saveAchievements();
         }
     }
-    
+
     showAchievementNotification(achievement) {
         const notification = document.createElement('div');
         notification.className = 'achievement-notification';
@@ -306,7 +321,7 @@ class AchievementSystem {
                 </div>
             </div>
         `;
-        
+
         notification.style.cssText = `
             position: fixed;
             top: 50%;
@@ -322,162 +337,62 @@ class AchievementSystem {
             text-align: center;
             animation: achievementPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         `;
-        
+
         document.body.appendChild(notification);
-        
+
         setTimeout(() => {
             notification.style.animation = 'achievementFadeOut 0.5s ease forwards';
             setTimeout(() => notification.remove(), 500);
         }, 3000);
     }
+
+    trackPictogramUse(pictogram) {
+        if (!this.usedPictograms.has(pictogram)) {
+            this.usedPictograms.add(pictogram);
+            this.updateProgress('pictogramMaster');
+        }
+    }
 }
 
 const achievementSystem = new AchievementSystem();
 
-
-const originalSendMessage = window.sendMessage;
-let messageCount = 0;
-let lastMessageTime = Date.now();
-
-window.sendMessage = function() {
-    originalSendMessage();
-    
-    messageCount++;
-    const currentTime = Date.now();
-    
-    if (messageCount === 1) {
-        achievementSystem.unlock('firstMessage');
-    }
-    
-    if (currentTime - lastMessageTime < 60000) { // Dentro de 1 minuto
-        achievementSystem.updateProgress('speedTyper');
-    }
-    
-    lastMessageTime = currentTime;
-    
-    soundManager.playMessage();
-};
-
-const originalAddPictogram = window.addPictogram;
-const usedPictograms = new Set();
-
-window.addPictogram = function(pictogram) {
-    originalAddPictogram(pictogram);
-    
-    if (!usedPictograms.has(pictogram)) {
-        usedPictograms.add(pictogram);
-        achievementSystem.updateProgress('pictogramMaster');
-    }
-};
-
-const originalSelectFriend = window.selectFriend;
-const chattedFriends = new Set();
-
-window.selectFriend = function(friendName) {
-    originalSelectFriend(friendName);
-    
-    if (!chattedFriends.has(friendName)) {
-        chattedFriends.add(friendName);
-        achievementSystem.updateProgress('socialButterfly');
-    }
-};
-
-
-document.addEventListener('DOMContentLoaded', function() {
-    const achievementStyles = document.createElement('style');
-    achievementStyles.textContent = `
-        @keyframes achievementPop {
-            0% {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.5) rotate(-10deg);
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1.1) rotate(5deg);
-            }
-            100% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1) rotate(0deg);
-            }
-        }
-        
-        @keyframes achievementFadeOut {
-            from {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-            to {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8);
-            }
-        }
-        
-        .achievement-content {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .achievement-icon {
-            font-size: 3rem;
-            animation: bounce 1s infinite;
-        }
-        
-        .achievement-text h3 {
-            margin: 0 0 5px 0;
-            font-size: 1.2rem;
-            font-weight: bold;
-        }
-        
-        .achievement-text h4 {
-            margin: 0 0 5px 0;
-            font-size: 1rem;
-        }
-        
-        .achievement-text p {
-            margin: 0;
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-    `;
-    document.head.appendChild(achievementStyles);
-    
-    setTimeout(() => {
-        if (typeof window.showNotification === 'function') {
-            window.showNotification('¡Bienvenido a PictoAmigos! 🌟', 'success');
-        }
-        soundManager.playNotification();
-    }, 1000);
-});
-
-
-window.changeTheme = function(themeName) {
+function changeTheme(themeName) {
     applyTheme(themeName);
     settingsManager.updateSetting('theme', themeName);
-};
+}
 
-window.toggleSound = function() {
+function toggleSound() {
     const enabled = soundManager.toggle();
     settingsManager.updateSetting('soundEnabled', enabled);
-};
+}
 
-window.showAchievements = function() {
+function showAchievements() {
     const achievementsList = Object.values(achievementSystem.achievements)
         .map(achievement => {
             const status = achievement.unlocked ? '✅' : '⏳';
-            const progress = achievement.target ? 
+            const progress = achievement.target ?
                 ` (${achievement.progress || 0}/${achievement.target})` : '';
             return `${status} ${achievement.icon} ${achievement.title}${progress}`;
         }).join('\n');
-    
-    alert(`🏆 Tus Logros:\n\n${achievementsList}`);
-};
 
-window.PictoAmigosExtensions = {
+    alert(`🏆 Tus Logros:\n\n${achievementsList}`);
+}
+
+export const ExtensionsModule = {
     settingsManager,
     achievementSystem,
     soundManager,
     themes,
-    changeTheme: window.changeTheme,
-    toggleSound: window.toggleSound,
-    showAchievements: window.showAchievements
+    changeTheme,
+    toggleSound,
+    showAchievements
 };
+
+export function initializeExtensions() {
+    setTimeout(() => {
+        showNotification('¡Bienvenido a PictoAmigos! 🌟', 'success');
+        soundManager.playNotification();
+    }, 1000);
+
+    return ExtensionsModule;
+}
