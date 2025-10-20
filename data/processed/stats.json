@@ -1,0 +1,75 @@
+{
+  "total": 5000,
+  "asignacion": {
+    "SALUDAR": 350,
+    "PEDIR_OBJETO": 609,
+    "EMOCION": 609,
+    "NECESIDAD_FISICA": 608,
+    "DOLOR": 608,
+    "JUGAR": 608,
+    "DESPEDIR": 300,
+    "AYUDA": 608,
+    "CONFIRMACION": 250,
+    "NEGACION": 250,
+    "FALLBACK": 200
+  },
+  "stats": {
+    "SALUDAR": {
+      "train": 245,
+      "val": 53,
+      "test": 52
+    },
+    "PEDIR_OBJETO": {
+      "train": 427,
+      "val": 91,
+      "test": 91
+    },
+    "EMOCION": {
+      "train": 427,
+      "val": 91,
+      "test": 91
+    },
+    "NECESIDAD_FISICA": {
+      "train": 426,
+      "val": 91,
+      "test": 91
+    },
+    "DOLOR": {
+      "train": 426,
+      "val": 91,
+      "test": 91
+    },
+    "JUGAR": {
+      "train": 426,
+      "val": 91,
+      "test": 91
+    },
+    "DESPEDIR": {
+      "train": 210,
+      "val": 45,
+      "test": 45
+    },
+    "AYUDA": {
+      "train": 426,
+      "val": 91,
+      "test": 91
+    },
+    "CONFIRMACION": {
+      "train": 175,
+      "val": 38,
+      "test": 37
+    },
+    "NEGACION": {
+      "train": 175,
+      "val": 38,
+      "test": 37
+    },
+    "FALLBACK": {
+      "train": 140,
+      "val": 30,
+      "test": 30
+    }
+  },
+  "seed": 42,
+  "ruido_prob": 0.12
+}

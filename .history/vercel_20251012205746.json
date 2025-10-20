@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/api.py": {
+      "runtime": "python3.9",
+      "maxDuration": 30,
+      "memory": 3008
+    }
+  },
+  "env": {
+    "PYTHONPATH": "."
+  }
+}

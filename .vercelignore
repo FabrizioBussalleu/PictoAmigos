@@ -1,0 +1,17 @@
+# Archivos a ignorar en el deploy de Vercel
+node_modules/
+.git/
+.env
+*.log
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/models/baseline_nb.joblib
+backend/data/
+backend/scripts/
+test_*.py
+run_server.py
+backend/api.py
+backend/models/predict.py
+backend/models/train.py
+backend/setup.py

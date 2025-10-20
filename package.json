@@ -4,9 +4,8 @@
   "description": "Red social de pictogramas para niños - Interfaz amigable con chat y elementos visuales interactivos",
   "main": "index.html",
   "scripts": {
-    "start": "npx http-server . -p 3000 -o",
-    "dev": "npx live-server --port=3000 --open=/index.html",
-    "build": "echo 'Proyecto listo para producción'",
+    "dev": "vite",
+    "build": "vite build",
     "deploy": "echo 'Configurar despliegue según plataforma'"
   },
   "keywords": [
@@ -27,9 +26,20 @@
   },
   "devDependencies": {
     "http-server": "^14.1.1",
-    "live-server": "^1.2.2"
+    "live-server": "^1.2.0"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@types/node": "^24.7.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.545.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.9"
+  },
   "engines": {
     "node": ">=14.0.0"
   },
