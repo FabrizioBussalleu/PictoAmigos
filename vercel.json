@@ -8,5 +8,11 @@
   },
   "env": {
     "PYTHONPATH": "."
-  }
+  },
+  "builds": [
+    {
+      "src": "api/api.py",
+      "use": "@vercel/python"
+    }
+  ]
 }

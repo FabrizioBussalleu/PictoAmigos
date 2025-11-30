@@ -5,6 +5,8 @@
   "main": "index.html",
   "scripts": {
     "dev": "vite",
+    "dev:api": "python run.py",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\" --names \"frontend,backend\" --prefix-colors \"cyan,magenta\"",
     "build": "vite build",
     "deploy": "echo 'Configurar despliegue según plataforma'"
   },
@@ -25,10 +27,13 @@
     "url": "https://github.com/JorgeGarciaCS/TP-TF-IA---social-network-of-pictograms-.git"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "http-server": "^14.1.1",
-    "live-server": "^1.2.0"
+    "live-server": "^1.2.0",
+    "vercel": "^48.10.14"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.84.0",
     "@types/node": "^24.7.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.1",

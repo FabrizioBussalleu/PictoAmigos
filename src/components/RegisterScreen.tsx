@@ -1,4 +1,5 @@
 import { useState, FormEvent } from "react";
+import { supabase } from "../config/supabase";
 
 interface RegisterScreenProps {
   onShowScreen: (screen: "welcome" | "login") => void;
@@ -25,36 +26,58 @@ const RegisterScreen = ({ onShowScreen }: RegisterScreenProps) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      try {
-        const users = JSON.parse(localStorage.getItem("users") || "[]");
-        const userExists = users.some((user: any) => user.email === email);
+    try {
+      // Registrar usuario en Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            username: username,
+          },
+        },
+      });
 
-        if (userExists) {
-          setErrors({ ...errors, email: "Este correo electrónico ya está registrado." });
-          setIsLoading(false);
-          return;
+      if (error) {
+        if (error.message.includes('already registered')) {
+          setErrors({ email: "Este correo electrónico ya está registrado." });
+        } else {
+          setErrors({ form: error.message });
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        // Guardar información adicional en la tabla usuarios
+        const { error: insertError } = await supabase
+          .from('usuarios')
+          .insert([
+            {
+              email: email,
+              nombre: username,
+            },
+          ]);
+
+        if (insertError) {
+          console.error('Error al guardar datos del usuario:', insertError);
         }
 
-        const newUser = { username, email, password };
-        users.push(newUser);
-        localStorage.setItem("users", JSON.stringify(users));
-
         setIsLoading(false);
+        alert('¡Cuenta creada! Revisa tu correo para confirmar tu cuenta.');
         onShowScreen("login");
-
-      } catch (err) {
-        setErrors({ form: "Ocurrió un error al crear la cuenta. Inténtalo de nuevo." });
-        setIsLoading(false);
       }
-    }, 1500);
+
+    } catch (err: any) {
+      setErrors({ form: "Ocurrió un error al crear la cuenta. Inténtalo de nuevo." });
+      setIsLoading(false);
+    }
   };
 
   return (

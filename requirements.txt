@@ -1,6 +1,6 @@
 # Dependencias actualizadas para el modelo completo
-fastapi>=0.104.0
-uvicorn>=0.24.0
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
 scikit-learn>=1.3.0
 joblib>=1.3.0
 pandas>=2.0.0
@@ -10,3 +10,8 @@ Unidecode>=1.3.8
 requests>=2.32.0
 pydantic-settings>=2.6.1
 rapidfuzz>=3.6.0
+
+# Supabase
+supabase==2.3.4
+python-dotenv==1.0.0
+python-multipart==0.0.6

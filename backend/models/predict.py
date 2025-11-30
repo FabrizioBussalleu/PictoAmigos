@@ -172,17 +172,28 @@ class ChatPredictor:
         from sklearn.pipeline import Pipeline
         
         # Crear un modelo básico con datos mínimos
+        # Datos básicos alineados con las intenciones soportadas por el sistema
         basic_data = [
             ("hola", "SALUDAR"),
             ("buenos días", "SALUDAR"),
+            ("buenas tardes", "SALUDAR"),
             ("adiós", "DESPEDIR"),
             ("hasta luego", "DESPEDIR"),
             ("quiero jugar", "JUGAR"),
-            ("tengo hambre", "NECESIDAD_FISICA"),
-            ("me duele", "DOLOR"),
-            ("ayuda", "AYUDA"),
-            ("sí", "CONFIRMACION"),
-            ("no", "NEGACION")
+            ("juguemos", "JUGAR"),
+            ("necesito ayuda", "PEDIR_AYUDA"),
+            ("ayuda por favor", "PEDIR_AYUDA"),
+            ("tengo hambre", "EXPRESAR_NECESIDAD"),
+            ("quiero comer", "COMER_BEBER"),
+            ("quiero beber", "COMER_BEBER"),
+            ("me duele la cabeza", "DESCRIBIR_DOLOR"),
+            ("me duele", "DESCRIBIR_DOLOR"),
+            ("estoy feliz", "EXPRESAR_EMOCION"),
+            ("estoy triste", "EXPRESAR_EMOCION"),
+            ("vamos al parque", "IR_LUGAR"),
+            ("quiero ir a casa", "IR_LUGAR"),
+            ("gracias", "AGRADECER"),
+            ("muchas gracias", "AGRADECER"),
         ]
         
         texts = [item[0] for item in basic_data]
@@ -190,7 +201,7 @@ class ChatPredictor:
         
         # Crear pipeline básico
         pipeline = Pipeline([
-            ('tfidf', TfidfVectorizer(max_features=100)),
+            ('tfidf', TfidfVectorizer(max_features=300, ngram_range=(1,2))),
             ('nb', MultinomialNB())
         ])
         
@@ -202,4 +213,6 @@ class ChatPredictor:
         joblib.dump(pipeline, self.model_path)
         
         self.model = pipeline
-        print("Modelo básico creado y guardado exitosamente")
+        # Ajustar el umbral por defecto para ser menos estricto con datos básicos
+        self.fallback_threshold = 0.35
+        print("Modelo básico creado y guardado exitosamente (intenciones alineadas)")

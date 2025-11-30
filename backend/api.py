@@ -9,6 +9,14 @@ from backend.models.predict import ChatPredictor
 from backend.schemas import ChatRequest, ChatResponse, HealthResponse
 from backend.services.orchestrator import ConversationOrchestrator
 
+# Importar cliente de Supabase
+try:
+    from backend.supabase_client import supabase
+    SUPABASE_AVAILABLE = True
+except Exception:
+    SUPABASE_AVAILABLE = False
+    supabase = None
+
 SUPPORTED_INTENTS = [
     "SALUDAR",
     "DESPEDIR",

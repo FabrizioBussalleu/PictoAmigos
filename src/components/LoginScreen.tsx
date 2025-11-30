@@ -1,4 +1,5 @@
 import { useState, FormEvent } from "react";
+import { supabase } from "../config/supabase";
 
 interface LoginScreenProps {
   onShowScreen: (screen: "welcome" | "register") => void;
@@ -21,39 +22,49 @@ const LoginScreen = ({ onShowScreen, onLogin }: LoginScreenProps) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsLoading(true);
     setErrors({});
 
-    // Simulate API call
-    setTimeout(() => {
-      try {
-        const users = JSON.parse(localStorage.getItem("users") || "[]");
-        const user = users.find((user: any) => user.email === email);
+    try {
+      // Intentar login con Supabase
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-        if (!user) {
-          setErrors({ form: "No se encontró ninguna cuenta con ese correo." });
-          setIsLoading(false);
-          return;
+      if (error) {
+        if (error.message.includes('Invalid login credentials')) {
+          setErrors({ form: "Correo o contraseña incorrectos." });
+        } else {
+          setErrors({ form: error.message });
         }
-
-        if (user.password !== password) {
-          setErrors({ form: "La contraseña es incorrecta." });
-          setIsLoading(false);
-          return;
-        }
-
-        // Success
-        onLogin(user.username);
-
-      } catch (err) {
-        setErrors({ form: "Ocurrió un error al iniciar sesión." });
         setIsLoading(false);
+        return;
       }
-    }, 1500);
+
+      if (data.user) {
+        // Obtener información adicional del usuario desde la tabla
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('nombre')
+          .eq('email', email)
+          .single();
+
+        if (userError || !userData) {
+          onLogin(data.user.email?.split('@')[0] || 'Usuario');
+        } else {
+          onLogin(userData.nombre);
+        }
+      }
+
+    } catch (err: any) {
+      setErrors({ form: "Ocurrió un error al iniciar sesión." });
+      setIsLoading(false);
+    }
   };
 
   return (

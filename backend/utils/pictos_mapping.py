@@ -114,7 +114,10 @@ class PictosMapper:
         # Prioridad 1: Intentar cargar desde datasets ARASAAC completos
         arasaac_mapping = self._build_from_arasaac_datasets()
         if arasaac_mapping:
-            print(f"Mapeo construido desde datasets ARASAAC: {len(arasaac_mapping)} términos")
+            try:
+                print(f"Mapeo construido desde datasets ARASAAC: {len(arasaac_mapping)} terminos")
+            except UnicodeEncodeError:
+                pass
             PictosMapper._mapping_cache = arasaac_mapping
             PictosMapper._mapping_source = 'datasets'
             return arasaac_mapping
@@ -152,7 +155,11 @@ class PictosMapper:
             if not (words_file.exists() and words_file.stat().st_size > 0):
                 return None
             
-            print("🔍 Construyendo mapeo desde datasets ARASAAC...")
+            try:
+                print("Construyendo mapeo desde datasets ARASAAC...")
+            except UnicodeEncodeError:
+                # Windows console encoding issue - just skip the emoji
+                pass
             
             # Cargar pictogramas
             with open(picto_file, 'r', encoding='utf-8') as f:
@@ -187,13 +194,19 @@ class PictosMapper:
                 
                 processed_pictos += 1
                 if processed_pictos % 10000 == 0:
-                    print(f"  Procesados {processed_pictos} pictogramas...")
+                    try:
+                        print(f"  Procesados {processed_pictos} pictogramas...")
+                    except UnicodeEncodeError:
+                        pass
             
             # Limpiar duplicados y limitar
             for keyword in mapping:
                 mapping[keyword] = sorted(list(set(mapping[keyword]))[:5])  # Max 5 pictos por palabra
             
-            print(f"✅ Mapeo construido: {len(mapping)} términos únicos")
+            try:
+                print(f"Mapeo construido: {len(mapping)} terminos unicos")
+            except UnicodeEncodeError:
+                pass
             return mapping
             
         except Exception as e:
