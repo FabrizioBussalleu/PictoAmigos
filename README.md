@@ -243,4 +243,4 @@ MIT License - ver el archivo LICENSE para más detalles
 
 ## 👥 Equipo
 
-Proyecto desarrollado para el curso de Inteligencia Artificial - UTEC 2025
+Proyecto desarrollado para el curso de Inteligencia Artificial - UPC 2025
